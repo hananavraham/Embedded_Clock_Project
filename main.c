@@ -1,0 +1,1432 @@
+/********************************************************************
+ FileName:     main.c
+ Dependencies: See INCLUDES section
+ Processor:   PIC18 or PIC24 USB Microcontrollers
+ Hardware:    The code is natively intended to be used on the following
+        hardware platforms: PICDEM™ FS USB Demo Board, 
+        PIC18F87J50 FS USB Plug-In Module, or
+        Explorer 16 + PIC24 USB PIM.  The firmware may be
+        modified for use on other USB platforms by editing the
+        HardwareProfile.h file.
+ Complier:    Microchip C18 (for PIC18) or C30 (for PIC24)
+ Company:   Microchip Technology, Inc.
+
+ Software License Agreement:
+
+ The software supplied herewith by Microchip Technology Incorporated
+ (the “Company”) for its PIC® Microcontroller is intended and
+ supplied to you, the Company’s customer, for use solely and
+ exclusively on Microchip PIC Microcontroller products. The
+ software is owned by the Company and/or its supplier, and is
+ protected under applicable copyright laws. All rights are reserved.
+ Any use in violation of the foregoing restrictions may subject the
+ user to criminal sanctions under applicable laws, as well as to
+ civil liability for the breach of the terms and conditions of this
+ license.
+
+ THIS SOFTWARE IS PROVIDED IN AN “AS IS” CONDITION. NO WARRANTIES,
+ WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
+ TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
+ IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
+ CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+
+********************************************************************
+ File Description:
+
+ Change History:
+  Rev   Date         Description
+  1.0   11/19/2004   Initial release
+  2.1   02/26/2007   Updated for simplicity and to use common
+                     coding style
+********************************************************************/
+
+
+//	========================	INCLUDES	========================
+#ifdef _VISUAL
+#include "VisualSpecials.h"
+#endif // VISUAL
+
+#include "GenericTypeDefs.h"
+#include "Compiler.h"
+#include "HardwareProfile.h"
+
+#include "mtouch.h"
+
+#include "BMA150.h"
+
+#include "oled.h"
+
+#include "soft_start.h"
+
+#include <math.h>
+
+#include "OledGraphics.h"
+
+
+//	========================	CONFIGURATION	========================
+
+#if defined(PIC18F46J50_PIM)
+   //Watchdog Timer Enable bit:
+     #pragma config WDTEN = OFF          //WDT disabled (control is placed on SWDTEN bit)
+   //PLL Prescaler Selection bits:
+     #pragma config PLLDIV = 3           //Divide by 3 (12 MHz oscillator input)
+   //Stack Overflow/Underflow Reset Enable bit:
+     #pragma config STVREN = ON            //Reset on stack overflow/underflow enabled
+   //Extended Instruction Set Enable bit:
+     #pragma config XINST = OFF          //Instruction set extension and Indexed Addressing mode disabled (Legacy mode)
+   //CPU System Clock Postscaler:
+     #pragma config CPUDIV = OSC1        //No CPU system clock divide
+   //Code Protection bit:
+     #pragma config CP0 = OFF            //Program memory is not code-protected
+   //Oscillator Selection bits:
+     #pragma config OSC = ECPLL          //HS oscillator, PLL enabled, HSPLL used by USB
+   //Secondary Clock Source T1OSCEN Enforcement:
+     #pragma config T1DIG = ON           //Secondary Oscillator clock source may be selected
+   //Low-Power Timer1 Oscillator Enable bit:
+     #pragma config LPT1OSC = OFF        //Timer1 oscillator configured for higher power operation
+   //Fail-Safe Clock Monitor Enable bit:
+     #pragma config FCMEN = OFF           //Fail-Safe Clock Monitor disabled
+   //Two-Speed Start-up (Internal/External Oscillator Switchover) Control bit:
+     #pragma config IESO = OFF           //Two-Speed Start-up disabled
+   //Watchdog Timer Postscaler Select bits:
+     #pragma config WDTPS = 32768        //1:32768
+   //DSWDT Reference Clock Select bit:
+     #pragma config DSWDTOSC = INTOSCREF //DSWDT uses INTOSC/INTRC as reference clock
+   //RTCC Reference Clock Select bit:
+     #pragma config RTCOSC = T1OSCREF    //RTCC uses T1OSC/T1CKI as reference clock
+   //Deep Sleep BOR Enable bit:
+     #pragma config DSBOREN = OFF        //Zero-Power BOR disabled in Deep Sleep (does not affect operation in non-Deep Sleep modes)
+   //Deep Sleep Watchdog Timer Enable bit:
+     #pragma config DSWDTEN = OFF        //Disabled
+   //Deep Sleep Watchdog Timer Postscale Select bits:
+     #pragma config DSWDTPS = 8192       //1:8,192 (8.5 seconds)
+   //IOLOCK One-Way Set Enable bit:
+     #pragma config IOL1WAY = OFF        //The IOLOCK bit (PPSCON<0>) can be set and cleared as needed
+   //MSSP address mask:
+     #pragma config MSSP7B_EN = MSK7     //7 Bit address masking
+   //Write Protect Program Flash Pages:
+     #pragma config WPFP = PAGE_1        //Write Protect Program Flash Page 0
+   //Write Protection End Page (valid when WPDIS = 0):
+     #pragma config WPEND = PAGE_0       //Write/Erase protect Flash Memory pages starting at page 0 and ending with page WPFP[5:0]
+   //Write/Erase Protect Last Page In User Flash bit:
+     #pragma config WPCFG = OFF          //Write/Erase Protection of last page Disabled
+   //Write Protect Disable bit:
+     #pragma config WPDIS = OFF          //WPFP[5:0], WPEND, and WPCFG bits ignored
+  
+#else
+    #error No hardware board defined, see "HardwareProfile.h" and __FILE__
+#endif
+
+
+
+//	========================	Global VARIABLES	========================
+#pragma udata
+//You can define Global Data Elements here
+
+//	========================	PRIVATE PROTOTYPES	========================
+static void InitializeSystem(void);
+static void ProcessIO(void);
+static void UserInit(void);
+static void YourHighPriorityISRCode();
+static void YourLowPriorityISRCode();
+static void addSecond();
+
+BOOL CheckButtonPressed(void);
+
+static int Time[3]  = {0,0,0};
+static int Date[2]  = {1,1};
+static BOOL IsDigitalMode = TRUE;
+static BOOL EnableAlarm = FALSE;
+static BOOL Is12Hours = FALSE;
+static BOOL IsAM = FALSE;
+static BOOL IsClockSet = FALSE;
+
+
+//	========================	VECTOR REMAPPING	========================
+#if defined(__18CXX)
+  //On PIC18 devices, addresses 0x00, 0x08, and 0x18 are used for
+  //the reset, high priority interrupt, and low priority interrupt
+  //vectors.  However, the current Microchip USB bootloader 
+  //examples are intended to occupy addresses 0x00-0x7FF or
+  //0x00-0xFFF depending on which bootloader is used.  Therefore,
+  //the bootloader code remaps these vectors to new locations
+  //as indicated below.  This remapping is only necessary if you
+  //wish to program the hex file generated from this project with
+  //the USB bootloader.  If no bootloader is used, edit the
+  //usb_config.h file and comment out the following defines:
+  //#define PROGRAMMABLE_WITH_SD_BOOTLOADER
+  
+  #if defined(PROGRAMMABLE_WITH_SD_BOOTLOADER)
+    #define REMAPPED_RESET_VECTOR_ADDRESS     0xA000
+    #define REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS  0xA008
+    #define REMAPPED_LOW_INTERRUPT_VECTOR_ADDRESS 0xA018
+  #else 
+    #define REMAPPED_RESET_VECTOR_ADDRESS     0x00
+    #define REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS  0x08
+    #define REMAPPED_LOW_INTERRUPT_VECTOR_ADDRESS 0x18
+  #endif
+  
+  #if defined(PROGRAMMABLE_WITH_SD_BOOTLOADER)
+  extern void _startup (void);        // See c018i.c in your C18 compiler dir
+  #pragma code REMAPPED_RESET_VECTOR = REMAPPED_RESET_VECTOR_ADDRESS
+  void _reset (void)
+  {
+      _asm goto _startup _endasm
+  }
+  #endif
+  #pragma code REMAPPED_HIGH_INTERRUPT_VECTOR = REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS
+  void Remapped_High_ISR (void)
+  {
+       _asm goto YourHighPriorityISRCode _endasm
+  }
+  #pragma code REMAPPED_LOW_INTERRUPT_VECTOR = REMAPPED_LOW_INTERRUPT_VECTOR_ADDRESS
+  void Remapped_Low_ISR (void)
+  {
+       _asm goto YourLowPriorityISRCode _endasm
+  }
+  
+  #if defined(PROGRAMMABLE_WITH_SD_BOOTLOADER)
+  //Note: If this project is built while one of the bootloaders has
+  //been defined, but then the output hex file is not programmed with
+  //the bootloader, addresses 0x08 and 0x18 would end up programmed with 0xFFFF.
+  //As a result, if an actual interrupt was enabled and occured, the PC would jump
+  //to 0x08 (or 0x18) and would begin executing "0xFFFF" (unprogrammed space).  This
+  //executes as nop instructions, but the PC would eventually reach the REMAPPED_RESET_VECTOR_ADDRESS
+  //(0x1000 or 0x800, depending upon bootloader), and would execute the "goto _startup".  This
+  //would effective reset the application.
+  
+  //To fix this situation, we should always deliberately place a 
+  //"goto REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS" at address 0x08, and a
+  //"goto REMAPPED_LOW_INTERRUPT_VECTOR_ADDRESS" at address 0x18.  When the output
+  //hex file of this project is programmed with the bootloader, these sections do not
+  //get bootloaded (as they overlap the bootloader space).  If the output hex file is not
+  //programmed using the bootloader, then the below goto instructions do get programmed,
+  //and the hex file still works like normal.  The below section is only required to fix this
+  //scenario.
+  #pragma code HIGH_INTERRUPT_VECTOR = 0x08
+  void High_ISR (void)
+  {
+       _asm goto REMAPPED_HIGH_INTERRUPT_VECTOR_ADDRESS _endasm
+  }
+  #pragma code LOW_INTERRUPT_VECTOR = 0x18
+  void Low_ISR (void)
+  {
+       _asm goto REMAPPED_LOW_INTERRUPT_VECTOR_ADDRESS _endasm
+  }
+  #endif  //end of "#if defined(||defined(PROGRAMMABLE_WITH_USB_MCHPUSB_BOOTLOADER))"
+
+  #pragma code
+  
+//	========================	Application Interrupt Service Routines	========================
+  //These are your actual interrupt handling routines.
+  #pragma interrupt YourHighPriorityISRCode
+  void YourHighPriorityISRCode()
+  {
+    //Check which interrupt flag caused the interrupt.
+    //Service the interrupt
+    //Clear the interrupt flag
+    //Etc.
+
+	if (INTCONbits.T0IF)
+	{
+		addSecond();
+	}
+  } //This return will be a "retfie fast", since this is in a #pragma interrupt section 
+  #pragma interruptlow YourLowPriorityISRCode
+  void YourLowPriorityISRCode()
+  {
+    //Check which interrupt flag caused the interrupt.
+    //Service the interrupt
+    //Clear the interrupt flag
+    //Etc.
+  
+  } //This return will be a "retfie", since this is in a #pragma interruptlow section 
+#endif
+
+
+
+
+//	========================	Board Initialization Code	========================
+#pragma code
+#define ROM_STRING rom unsigned char*
+
+/******************************************************************************
+ * Function:        void UserInit(void)
+ *
+ * PreCondition:    None
+ *
+ * Input:           None
+ *
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        This routine should take care of all of the application code
+ *                  initialization that is required.
+ *
+ * Note:            
+ *
+ *****************************************************************************/
+
+#define FILE_FETCH		0
+#define SCREEN_UPDATE	1
+#define USER_INPUT		2
+
+
+
+void UserInit(void)
+{
+
+  /* Initialize the mTouch library */
+  mTouchInit();
+
+  /* Call the mTouch callibration function */
+  mTouchCalibrate();
+
+  /* Initialize the accelerometer */
+  InitBma150(); 
+
+  /* Initialize the oLED Display */
+   ResetDevice();  
+   FillDisplay(0x00);
+   //oledPutROMString((ROM_STRING)" PIC18F Starter Kit  ",0,0);
+}//end UserInit
+
+
+/********************************************************************
+ * Function:        static void InitializeSystem(void)
+ *
+ * PreCondition:    None
+ *
+ * Input:           None
+ *
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        InitializeSystem is a centralize initialization
+ *                  routine. All required USB initialization routines
+ *                  are called from here.
+ *
+ *                  User application initialization routine should
+ *                  also be called from here.                  
+ *
+ * Note:            None
+ *******************************************************************/
+static void InitializeSystem(void)
+{
+	// Soft Start the APP_VDD
+	while(!AppPowerReady())
+		;
+
+    #if defined(PIC18F46J50_PIM)
+  //Configure all I/O pins to use digital input buffers
+    ANCON0 = 0xFF;                  // Default all pins to digital
+    ANCON1 = 0xFF;                  // Default all pins to digital
+    #endif
+       
+    UserInit();
+
+}//end InitializeSystem
+
+
+//	========================	Application Code	========================
+
+BOOL CheckButtonPressed(void)
+{
+	static char buffer[10];
+    static char buttonPressed = FALSE;
+    static unsigned long buttonPressCounter = 0;
+
+    if(PORTBbits.RB0 == 0)
+    {
+        if(buttonPressCounter++ > 10)
+        {
+            buttonPressCounter = 0;
+            buttonPressed = TRUE;
+			//sprintf(buffer,"%c",'@');
+			//oledPutString(buffer, 0, 20*6);
+        }
+    }
+    else
+    {
+        if(buttonPressed == TRUE)
+        {
+            if(buttonPressCounter == 0)
+            {
+                buttonPressed = FALSE;
+				//sprintf(buffer,"%c",'O');
+				//oledPutString(buffer, 0, 20*6);
+                return TRUE;
+            }
+            else
+            {
+                buttonPressCounter--;
+				//sprintf(buffer,"%c",'@');
+				//oledPutString(buffer, 0, 20*6);
+            }
+        }
+    }
+    return FALSE;
+}
+
+
+void swap(char *x, char *y) {
+	char t = *x; *x = *y; *y = t;
+}
+
+// function to reverse buffer[i..j]
+char* reverse(char *buffer, int i, int j)
+{
+	while (i < j)
+		swap(&buffer[i++], &buffer[j--]);
+
+	return buffer;
+}
+
+
+int abs(int i)
+{      /* compute absolute value of int argument */
+	return (i < 0 ? -i : i);
+}
+
+
+// Iterative function to implement itoa() function in C
+char* itoa(int value, char* buffer)
+{
+	// consider absolute value of number
+	int n = abs(value);
+
+	int i = 0;
+	while (n)
+	{
+		int r = n % 10;
+
+		if (r >= 10) 
+			buffer[i++] = 65 + (r - 10);
+		else
+			buffer[i++] = 48 + r;
+
+		n = n / 10;
+	}
+
+	// if number is 0
+	if (i == 0)
+		buffer[i++] = '0';
+
+	// If base is 10 and value is negative, the resulting string 
+	// is preceded with a minus sign (-)
+	// With any other base, value is always considered unsigned
+	if (value < 0)
+		buffer[i++] = '-';
+
+	buffer[i] = '\0'; // null terminate string
+
+	// reverse the string and return it
+	return reverse(buffer, 0, i - 1);
+}
+
+
+/* printing which choice selected */
+void printExecuteChoice(int choice)
+{
+	unsigned char x;
+	if(choice == 7)
+		choice = 4;
+	else
+		choice /= 2;
+	x = choice + 0x30;
+	FillDisplay(0x00);
+	oledPutROMString("Operation", 2, 0);
+	oledWriteChar1x(x, 2, 10*6);
+	oledPutROMString("Executed" , 2, 12*6);
+	oledPutROMString("Press Button", 4, 5*6);
+	oledPutROMString("to return", 6, 7*6);
+	while(!CheckButtonPressed()) {}
+}
+
+void printLongMenuExecuteChoice(int choice)
+{
+	unsigned char x;	
+	x = 0x30;
+	FillDisplay(0x00);
+	oledPutROMString("Operation", 2, 0);
+	if(choice <= 9)
+		oledWriteChar1x(x + choice, 2, 10*6);
+	else
+	{
+		oledWriteChar1x(x + (choice /10), 2, 10*6);
+		oledWriteChar1x(x + (choice % 10), 2, 11*6);
+	}
+	oledPutROMString(" Executed" , 2, 12*6);
+	oledPutROMString("Press Button", 4, 5*6);
+	oledPutROMString("to return", 6, 7*6);
+	while(!CheckButtonPressed()) {}
+}
+
+
+/* marking the current choice for All Sub Menu except Set Time & Date Menu */
+void printCurrentHorizontalLine(int lineSelect)
+{
+	switch (lineSelect)
+	{
+		case 1:
+			FillInverseDisplay(0xFF, 3,0,0,4);
+			break;
+		case 2:
+			FillInverseDisplay(0xFF, 5,0,0,4);
+			break;
+	}
+}
+
+
+
+/* this method check the potentiometer status */
+int checkPotNavigate()
+{
+	int pot = 0;
+
+	ADCON0 = 0x13;
+	pot = ((int)ADRESH << 8) + ADRESL;
+
+	if (pot >= 0 && pot < 204)
+		return 2;
+	else if(pot >= 204 && pot < 404)
+		return 3;
+	else if(pot >= 404 && pot < 606)
+		return 4;
+	else if(pot >= 606 && pot < 808)
+		return 5;
+	else
+		return 6;
+}
+
+/* this method print '_' under the current field inside setDate and seiTime menu */
+void printCurrentField(int lineSelect)
+{
+	switch (lineSelect)
+	{
+		case 0:
+			oledWriteChar1x(0X5F,0xB4,30);
+			oledWriteChar1x(0X5F,0xB4,33);
+			oledWriteChar1x(0X5F,0xB4,36);
+			break;
+
+		case 1:
+			oledWriteChar1x(0X5F,0xB4,47);
+			oledWriteChar1x(0X5F,0xB4,50);
+			oledWriteChar1x(0X5F,0xB4,53);
+			break;
+
+		case 2:
+			oledWriteChar1x(0X5F,0xB4,65);
+			oledWriteChar1x(0X5F,0xB4,68);
+			oledWriteChar1x(0X5F,0xB4,71);
+			break;
+	}
+}
+
+
+/* In this SubMenu Navigate with Potentiometer */
+void DisplayModeMenu()
+{
+	int Right_button, Left_button , button1;
+	int lineSelect = 1;
+	BOOL status = TRUE;
+
+	while(1)
+	{
+		if(status)
+		{
+			FillDisplay(0x00);
+			oledPutROMString("Display Mode Menu", 0, 3*6);
+		
+			oledPutROMString("Digital Clock", 3, 3* 6);
+			oledPutROMString("Analog Clock", 5, 3* 6);
+			
+			status = FALSE;
+		}
+	
+		if(lineSelect == 1)
+			FillInverseDisplay(0xFF, 3,0,0,4);
+		else
+			FillInverseDisplay(0xFF, 5,0,0,4);	
+
+	
+		if(CheckButtonPressed())
+		{
+			if(lineSelect == 1)
+				IsDigitalMode = TRUE;
+			else
+				IsDigitalMode = FALSE;
+			return;		
+		}
+
+		mTouchCalibrate();
+		/* check if Up Button pressed to back the Main Menu */
+		button1 = mTouchReadButton(1);
+		if (button1 < 900)
+		{
+			/* wait for the slider to be released */
+			while (button1 < 900)
+			{
+				button1 = mTouchReadButton(1);
+			}
+
+			return;
+		}
+
+		
+		/* Read the R button - RA0 */
+		Right_button = mTouchReadButton(0);
+		/* Read the L button - RA3 */
+		Left_button = mTouchReadButton(3);
+	
+		/* Check if the R button was pressed */
+		if (Right_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Right_button < 900)
+			{
+				Right_button = mTouchReadButton(0);
+			}
+
+			if(lineSelect < 2)
+			{
+				lineSelect++;	
+				status = TRUE;
+			}	
+		}
+	
+		if (Left_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Left_button < 900)
+			{
+				Left_button = mTouchReadButton(3);
+			}
+			if(lineSelect > 1)
+			{
+				lineSelect--;
+				status = TRUE;
+			}	
+		}
+	}
+}
+
+
+/* In this SubMenu Navigate with Tilt X */
+void HoursIntervalMenu()
+{
+	int Right_button, Left_button , button1;
+	int lineSelect = 1;
+	BOOL status = TRUE;
+
+	while(1)
+	{
+		if(status)
+		{
+			FillDisplay(0x00);
+			oledPutROMString("Hours Interval", 0, 3*6);
+		
+			oledPutROMString("12H", 3, 3* 6);
+			oledPutROMString("24H", 5, 3* 6);
+			
+			status = FALSE;
+		}
+	
+		if(lineSelect == 1)
+			FillInverseDisplay(0xFF, 3,0,0,4);
+		else
+			FillInverseDisplay(0xFF, 5,0,0,4);	
+
+	
+		if(CheckButtonPressed())
+		{
+			if(lineSelect == 1)
+				Is12Hours = TRUE;
+			else
+				Is12Hours = FALSE;
+			return;		
+		}
+
+		mTouchCalibrate();
+		/* check if Up Button pressed to back the Main Menu */
+		button1 = mTouchReadButton(1);
+		if (button1 < 900)
+		{
+			/* wait for the slider to be released */
+			while (button1 < 900)
+			{
+				button1 = mTouchReadButton(1);
+			}
+
+			return;
+		}
+
+		
+		/* Read the R button - RA0 */
+		Right_button = mTouchReadButton(0);
+		/* Read the L button - RA3 */
+		Left_button = mTouchReadButton(3);
+	
+		/* Check if the R button was pressed */
+		if (Right_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Right_button < 900)
+			{
+				Right_button = mTouchReadButton(0);
+			}
+
+			if(lineSelect < 2)
+			{
+				lineSelect++;	
+				status = TRUE;
+			}	
+		}
+	
+		if (Left_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Left_button < 900)
+			{
+				Left_button = mTouchReadButton(3);
+			}
+			if(lineSelect > 1)
+			{
+				lineSelect--;
+				status = TRUE;
+			}	
+		}
+	}
+}
+
+
+/* In this SubMenu Navigate with R , L buttons */
+void SetTimeMenu()
+{
+	int Right_button, Left_button, button1, button2;
+	char buffer[10];
+	int lineSelect = 0;
+	BOOL status = TRUE;
+	int tempTime[3] = {0,0,0};
+	tempTime[0] = Time[0];
+	tempTime[1] = Time[1];
+	tempTime[2] = Time[2];
+	while(1)
+	{	
+		if(status)
+		{
+			FillDisplay(0x00);
+					
+			oledPutROMString("Set Time Menu", 0, 5*5);
+			sprintf(buffer,"%02d:%02d:%02d",tempTime[0],tempTime[1],tempTime[2]);
+			oledPutString(buffer, 3, 5*6);
+
+			// need to check if we are in 12H or 24H 
+			// if 12H need to print also AM\ PM
+			if(Is12Hours)
+			{
+				if(IsAM)
+					oledPutROMString("AM", 3, 14*6);
+					//oledWriteChar1x(0x41,3,14*6);
+				else
+					oledPutROMString("PM", 3, 14*6);
+					//oledWriteChar1x(0X50,3,14*6);
+				//oledWriteChar1x(0x4D,3, 15*6);
+			}
+		}
+
+		printCurrentField(lineSelect);
+
+	
+		if(CheckButtonPressed())
+		{
+			Time[0] = tempTime[0];
+			Time[1] = tempTime[1];
+			Time[2] = tempTime[2];
+			IsClockSet = TRUE;
+			return;		
+		}		
+
+
+		mTouchCalibrate();
+		/* Read the R button - RA0 */
+		Right_button = mTouchReadButton(0);
+		/* Read the L button - RA3 */
+		Left_button = mTouchReadButton(3);
+	
+		/* Check if the R button was pressed */
+		if (Right_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Right_button < 900)
+			{
+				Right_button = mTouchReadButton(0);
+			}
+
+			if(lineSelect < 2)
+			{
+				lineSelect++;	
+				status = TRUE;
+			}	
+		}
+	
+		if (Left_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Left_button < 900)
+			{
+				Left_button = mTouchReadButton(3);
+			}
+			if(lineSelect > 0)
+			{
+				lineSelect--;
+				status = TRUE;
+			}	
+		}
+
+		mTouchCalibrate();
+		/* Scroll bar - RA1/RA2*/
+		button1 = mTouchReadButton(1);
+		button2 = mTouchReadButton(2);
+
+		if ((button1 < 800) || (button2 < 800))
+		{
+			if (button1 < button2)
+			{
+				switch(lineSelect)
+				{
+					case 0:  // hours
+						if (!Is12Hours)
+						{
+							if(tempTime[lineSelect] < 23)
+								tempTime[lineSelect]++;
+							else
+								tempTime[lineSelect] = 0;
+						}
+						else
+						{
+							if(tempTime[lineSelect] < 12)
+								tempTime[lineSelect]++;
+							else
+							{	
+								tempTime[lineSelect] = 1;
+								if(IsAM)
+									IsAM = FALSE;	
+								else
+									IsAM = TRUE;
+							}							
+						}
+						status = TRUE;
+						break;
+					case 1:
+					case 2:
+						if(tempTime[lineSelect] < 59)
+							tempTime[lineSelect]++;
+						else
+							tempTime[lineSelect] = 0;
+						status = TRUE;
+						break;
+				}
+			}		
+			else
+			{
+				switch(lineSelect)
+				{
+					case 0:  // hours
+						if (!Is12Hours)
+						{
+							if(tempTime[lineSelect] > 0)
+								tempTime[lineSelect]--;
+							else
+								tempTime[lineSelect] = 23;
+						}
+						else
+						{
+							if(tempTime[lineSelect] > 1)
+								tempTime[lineSelect]--;
+							else
+							{	
+								tempTime[lineSelect] = 12;
+								if(IsAM)
+									IsAM = FALSE;	
+								else
+									IsAM = TRUE;
+							}							
+						}
+						status = TRUE;
+						break;
+					case 1:
+					case 2:
+						if(tempTime[lineSelect] > 0)
+							tempTime[lineSelect]--;
+						else
+							tempTime[lineSelect] = 59;
+						status = TRUE;
+						break;
+				}
+				
+			}
+			/* wait for the slider to be released */
+			while ((button1 < 800))
+			{
+				button1 = mTouchReadButton(1);
+				button2 = mTouchReadButton(2);
+			}
+		}
+
+
+	}
+}
+
+
+void SetDateMenu()
+{
+	int Right_button, Left_button, button1, button2;
+	int lineSelect = 0;
+	char buffer[10];
+	BOOL status = TRUE;
+	int tempDate[2] = {0,0};
+	tempDate[0] = Date[0];
+	tempDate[1] = Date[1];
+	while(1)
+	{	
+		if(status)
+		{
+			FillDisplay(0x00);
+					
+			oledPutROMString("Set Date Menu", 0, 5*5);
+			sprintf(buffer,"%02d/%02d",tempDate[0],tempDate[1]);
+			oledPutString(buffer, 3, 5*6);
+		}
+
+		//lineSelect =  checkPotNavigate();
+		printCurrentField(lineSelect);
+
+	
+		if(CheckButtonPressed())
+		{
+			Date[0] = tempDate[0];
+			Date[1] = tempDate[1];
+			return;		
+		}		
+
+
+		mTouchCalibrate();
+		/* Read the R button - RA0 */
+		Right_button = mTouchReadButton(0);
+		/* Read the L button - RA3 */
+		Left_button = mTouchReadButton(3);
+	
+		/* Check if the R button was pressed */
+		if (Right_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Right_button < 900)
+			{
+				Right_button = mTouchReadButton(0);
+			}
+
+			if(lineSelect < 1)
+			{
+				lineSelect++;	
+				status = TRUE;
+			}	
+		}
+	
+		if (Left_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Left_button < 900)
+			{
+				Left_button = mTouchReadButton(3);
+			}
+			if(lineSelect > 0)
+			{
+				lineSelect--;
+				status = TRUE;
+			}	
+		}
+
+		/* Scroll bar - RA1/RA2*/
+		button1 = mTouchReadButton(1);
+		button2 = mTouchReadButton(2);
+
+		if ((button1 < 800) || (button2 < 800))
+		{
+			if (button1 < button2)
+			{
+				switch(lineSelect)
+				{
+					case 0:  // Days
+						if(tempDate[lineSelect] < 31)
+							tempDate[lineSelect]++;
+						else
+						{	
+							tempDate[lineSelect] = 1;
+						}							
+						
+						status = TRUE;
+						break;
+					case 1:	// Months
+						if(tempDate[lineSelect] < 12)
+							tempDate[lineSelect]++;
+						else
+							tempDate[lineSelect] = 1;
+						status = TRUE;
+						break;
+				}
+			}		
+			else
+			{
+				switch(lineSelect)
+				{
+					case 0:  // hours
+						if(tempDate[lineSelect] > 1)
+							tempDate[lineSelect]--;
+						else
+						{	
+							tempDate[lineSelect] = 31;
+						}							
+						status = TRUE;
+						break;
+					case 2:
+						if(tempDate[lineSelect] > 0)
+							tempDate[lineSelect]++;
+						else
+							tempDate[lineSelect] = 12;
+						status = TRUE;
+						break;
+				}
+				
+			}
+			/* wait for the slider to be released */
+			while ((button1 < 800))
+			{
+				button1 = mTouchReadButton(1);
+				button2 = mTouchReadButton(2);
+			}
+		}
+
+	}
+}
+
+void AlarmMenu()
+{
+	int Right_button, Left_button , button1;
+	int lineSelect = 1;
+	BOOL status = TRUE;
+
+	while(1)
+	{
+		if(status)
+		{
+			FillDisplay(0x00);
+			oledPutROMString("Alarm Menu", 0, 5*6);
+		
+			oledPutROMString("ON", 3, 3* 6);
+			oledPutROMString("OFF", 5, 3* 6);
+			
+			status = FALSE;
+		}
+	
+		if(lineSelect == 1)
+			FillInverseDisplay(0xFF, 3,0,0,4);
+		else
+			FillInverseDisplay(0xFF, 5,0,0,4);	
+
+	
+		if(CheckButtonPressed())
+		{
+			if(lineSelect == 1)
+				EnableAlarm = TRUE;
+			else
+				EnableAlarm = FALSE;
+			return;		
+		}
+
+		/* check if Up Button pressed to back the Main Menu */
+		button1 = mTouchReadButton(1);
+		if (button1 < 900)
+		{
+			/* wait for the slider to be released */
+			while (button1 < 900)
+			{
+				button1 = mTouchReadButton(1);
+			}
+
+			return;
+		}
+
+		mTouchCalibrate();
+		/* Read the R button - RA0 */
+		Right_button = mTouchReadButton(0);
+		/* Read the L button - RA3 */
+		Left_button = mTouchReadButton(3);
+	
+		/* Check if the R button was pressed */
+		if (Right_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Right_button < 900)
+			{
+				Right_button = mTouchReadButton(0);
+			}
+
+			if(lineSelect < 2)
+			{
+				lineSelect++;	
+				status = TRUE;
+			}	
+		}
+	
+		if (Left_button < 900)
+		{
+			/* wait for the button to be released */
+			while (Left_button < 900)
+			{
+				Left_button = mTouchReadButton(3);
+			}
+			if(lineSelect > 1)
+			{
+				lineSelect--;
+				status = TRUE;
+			}	
+		}
+	}
+}
+
+
+
+
+void EnterSubMenu(int lineSelect)
+{
+	switch (lineSelect)
+	{
+		case 2:
+			DisplayModeMenu();
+			break;
+
+		case 3:
+			HoursIntervalMenu();
+			break;
+
+		case 4:
+			SetTimeMenu();
+			break;
+
+		case 5:
+			SetDateMenu();
+			break;
+		
+		case 6:
+			AlarmMenu();
+			break;
+
+		default:
+			break;
+	}
+	FillDisplay(0x00);
+}
+
+int NavigateUpDown(int currentIndex)
+{
+	char* buf;
+	int button1, button2, Left_button;
+	int i =1;
+	BOOL status = TRUE; 
+
+//		FillInverseDisplay(0xFF, lineSelect ,0,0,80);
+//
+//		if(CheckButtonPressed())
+//		{
+//			EnterSubMenu(lineSelect);
+//			status = TRUE;
+//		}
+
+		/* Scroll bar - RA1/RA2*/
+		button1 = mTouchReadButton(1);
+		button2 = mTouchReadButton(2);
+
+		if ((button1 < 800) || (button2 < 800))
+		{
+			if (button1 < button2)
+			{
+				if (currentIndex > 2)
+				{
+					return currentIndex -1;
+				}
+				else
+					return currentIndex;
+			}		
+			else
+			{
+				if(currentIndex < 6)
+				{
+					return currentIndex + 1;
+				}
+
+				else
+					return currentIndex;
+				
+			}
+			/* wait for the slider to be released */
+			while ((button1 < 800))
+			{
+				button1 = mTouchReadButton(1);
+				button2 = mTouchReadButton(2);
+			}
+		}
+	
+}
+
+/* priting small clock inside menu */
+void PrintSmallClock()
+{
+	char buffer[10];
+	INTCONbits.T0IE = 0 ;			//Timer0 Overflow Interrupt Disable
+	sprintf(buffer,"%02d:%02d:%02d",Time[0],Time[1],Time[2]);
+	oledPutString(buffer, 0, 10*6);
+	if(Is12Hours)
+	{
+		if(IsAM)
+		{
+			oledPutROMString("AM", 0, 19*6);;
+		}
+		else
+		{
+			oledPutROMString("PM", 0, 19*6);
+		}
+	}
+	
+
+	INTCONbits.T0IE = 1 ;			//Timer0 Overflow Interrupt Enabled
+}
+
+/* method to print all 60 clock points */
+void drawClockPoints()
+{
+	int i;
+	BYTE x,y;
+	//BYTE x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
+	//BYTE y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
+	for (i =0 ; i <60; i++)
+	{
+		x = 65+30*(cos(i*6));
+		y = 31+30*(sin(i*6));
+		//drawLine(x,y,x+0.2*(30*(int)cos(i*6)),y+0.2*(30*(int)sin(i*6)),thin);
+		drawLine(x,y,x,y,thin);
+	}	
+}
+
+/* static method invoke from interrupt for adding second */ 
+static void addSecond()
+{
+	if(Time[2] != 59)
+		Time[2]++;
+	else
+	{	
+		Time[2] = 0;
+		if(Time[1] != 59)
+			Time[1]++;
+		else
+		{
+			if(Is12Hours)		// if we working in 12H mode
+			{
+				if(Time[0] != 12)
+					Time[0]++;
+				else
+					Time[0] = 0;
+			}
+			else
+			{
+				if(Time[0] != 24)
+					Time[0]++;
+				else
+					Time[0] = 0;
+			}
+			if(Date[0] != 31)
+				Date[0]++;
+			else
+			{
+				Date[0] = 1;
+				Date[1]++;
+			}	
+		}	
+	}
+}
+
+void PrintDate()
+{
+	char buffer[10];
+	sprintf(buffer,"%02d/%02d",Date[0],Date[1]);
+	oledPutString(buffer, 7, 15*6);
+}
+
+void PrintAlarm()
+{
+	if(EnableAlarm)
+		oledWriteChar1x(0x41,0 , 1*6);	
+}
+
+void PrintMenu()
+{
+	int temp,button1;
+	int Right_button = 0;
+	int Left_button = 0;
+	int lineSelect = 2;
+	while(1)
+	{
+		ADCON0 = 0x13;
+		temp = lineSelect;
+		PrintSmallClock();
+		oledPutROMString("Display Mode", 2, 0);
+		oledPutROMString("12H/24H Interval", 3, 0);
+		oledPutROMString("Set Time", 4, 0);
+		oledPutROMString("Set Date", 5, 0);
+		oledPutROMString("Alarm", 6, 0);
+		lineSelect = checkPotNavigate();	
+	
+		PrintAlarm();
+		PrintDate();
+	
+		FillInverseDisplay(0xFF, lineSelect,0,0,100);
+		if(CheckButtonPressed())
+		{
+			EnterSubMenu(lineSelect);	
+		}
+	
+		if(temp != lineSelect)
+		{
+			FillDisplay(0x00);
+		}
+
+		mTouchCalibrate();
+		/* check if Up Button pressed to back the Main Menu */
+		button1 = mTouchReadButton(1);
+		if (button1 < 900)
+		{
+			/* wait for the slider to be released */
+			while (button1 < 900)
+			{
+				button1 = mTouchReadButton(1);
+			}
+			FillDisplay(0x00);
+			return;
+		}
+		
+	}
+
+}	
+
+/********************************************************************
+ * Function:        void main(void)
+ *
+ * PreCondition:    None
+ *
+ * Input:           None
+ *
+ * Output:          None
+ *
+ * Side Effects:    None
+ *
+ * Overview:        Main program entry point.
+ *
+ * Note:            None
+ *******************************************************************/
+void main(void)
+{
+	
+	BYTE x = 2;
+	
+	
+	InitializeSystem();
+
+
+//	T0CONbits.T08BIT = 0 ;			//Timer0 16BIT COUNTER
+//	T0CONbits.T0CS = 0 ;			//Clock Source -- Internal
+//	T0CONbits.PSA = 0 ;				//Use Pre-Scaler
+//	T0CONbits.T0PS = 1 ;			//Prescale 1:4
+//	T0CONbits.TMR0ON = 1 ;			//Set Timer to ON
+//
+//	RCONbits.IPEN = 1 ;				//Use Priority Interrutps
+//	INTCON2bits.T0IP = 1 ;			//Timer0 High-Priority
+//
+//	INTCONbits.GIE = 1 ;			//Enable Interrupts
+//	INTCONbits.PEIE = 1 ;
+//	INTCONbits.T0IE = 1 ;			//Timer0 Overflow Interrupt Enabled
+
+
+//	// Initialize Timer 0
+//	T0CON = 0x07 ;
+//	// Initialize Timer Interrupt
+//	RCONbits.IPEN = 1 ;			//Prio Enable
+//	INTCON2bits.TMR0IP = 1 ;	//Use Hi-Prio
+//	INTCON = 0xE0 ;				//Enable Timer Interrupt
+//
+//	T0CON |= 0x80 ;				//Start the Timer
+
+
+
+
+    while(1)							//Main is Usualy an Endless Loop
+    {		
+		while(x)	
+		{
+			x = x&ADCON0;	
+		}
+
+			
+		
+		
+
+		if(IsClockSet)
+		{
+			drawClockPoints();
+			PrintAlarm();
+			PrintDate();
+		}
+		
+		else
+			PrintMenu();	
+
+		if(CheckButtonPressed())
+		{
+			PrintMenu();	
+		}
+
+		
+	
+	
+//		mTouchCalibrate();
+//		Right_button = mTouchReadButton(0);
+//		Left_button = mTouchReadButton(3);
+//		//ADCON0 = 0x13;
+//
+//		/* Check if the R button was pressed */
+//		if (Right_button < 900)
+//		{
+//			/* wait for the button to be released */
+//			while (Right_button < 900)
+//			{
+//				Right_button = mTouchReadButton(0);
+//			}
+//			ADCON0 = 0x13;
+//
+//			EnterSubMenu(lineSelect);
+//
+//			FillDisplay(0x00);
+//		}
+
+		
+
+    }	// end while
+
+}   //end main
+
+
+/** EOF main.c *************************************************/
+//#endif
