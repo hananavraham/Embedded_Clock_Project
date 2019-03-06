@@ -135,18 +135,24 @@ void addMinute();
 void addHour();
 void addDay();
 void changeClockFormat();
+void printAnalogTime(int,int,int);
 
 BOOL CheckButtonPressed(void);
 
-static int Time[6]  = {0,0,0,0,0,0};		//{hours_high,hours_low,minutes_high,minutes_low,seconds_high,seconds_low}
-static int Date[2]  = {1,1};	// {day,month}
-static BOOL IsDigitalMode = TRUE;
-static BOOL EnableAlarm = FALSE;
-static BOOL Is12Hours = FALSE;
-static BOOL IsAM = FALSE;
-static BOOL IsClockSet = FALSE;
-static BOOL UpdateStatus = FALSE;
-
+int Time[6]  = {0,0,0,0,0,0};		//{hours_high,hours_low,minutes_high,minutes_low,seconds_high,seconds_low}
+int Date[2]  = {1,1};	// {day,month}
+int radius = 32;
+BOOL IsDigitalMode = TRUE;
+BOOL EnableAlarm = FALSE;
+BOOL Is12Hours = FALSE;
+BOOL IsAM = FALSE;
+BOOL IsClockSet = FALSE;
+BOOL UpdateStatus = FALSE;
+BOOL MenuFlag = FALSE;
+//int x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
+//int y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
+int x0 = 65;
+int y0 = 31;
 
 //	========================	VECTOR REMAPPING	========================
 #if defined(__18CXX)
@@ -1156,16 +1162,41 @@ void PrintSmallClock()
 void drawClockPoints()
 {
 	int i;
-	BYTE x,y;
+	BYTE _x0,_y0;
 	//BYTE x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
 	//BYTE y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
 	for (i =0 ; i <60; i++)
 	{
-		x = 65+30*(cos(i*6));
-		y = 31+30*(sin(i*6));
+		_x0 = x0+radius*(cos(i*6));
+		_y0 = y0+radius*(sin(i*6));
 		//drawLine(x,y,x+0.2*(30*(int)cos(i*6)),y+0.2*(30*(int)sin(i*6)),thin);
-		drawLine(x,y,x,y,thin);
+		drawLine(_x0,_y0,_x0,_y0,thin);
 	}	
+}
+
+/* getting value and type[sec,min,hour] */
+void printLine(int val, int type)
+{
+	int tempX,tempY;
+	switch (type)
+	{
+		case 0:
+			tempX = x0+radius*(sin(val*30));
+			tempY = y0+radius*(cos(val*30));
+			drawLine( x0, y0, x0+(tempX-x0)/2, y0+(tempY-y0)/2, fat ) ;		
+			break;
+		case 1:
+			tempX = x0+radius*(sin(val*6));
+			tempY = y0+radius*(cos(val*6));
+			drawLine( x0, y0, tempX-(tempX-x0)/5, tempY-(tempY-y0)/5, thick ) ;
+			break;
+		case 2:
+			tempX = x0+radius*(sin(val*6));
+			tempY = y0+radius*(cos(val*6));
+			drawLine( x0, y0, tempX-(tempX-x0)/5, tempY-(tempY-y0)/5, thin ) ;
+			break;
+	}
+
 }
 
 
@@ -1174,6 +1205,9 @@ void drawClockPoints()
 /* method invoke from interrupt for adding second */ 
 void addSecond()
 {
+	int s;
+	s = (Time[4] * 10) + Time[5];
+
 	if(Time[5] != 9)
 		Time[5]++;
 	else if(Time[5] == 9 && Time[4] != 5)
@@ -1189,12 +1223,21 @@ void addSecond()
 	}
 	
 	if(IsDigitalMode)
-		UpdateStatus = TRUE;	
+		UpdateStatus = TRUE;
+	else if(!MenuFlag)
+	{
+		printLine(s,2);
 
+		s = (Time[4] * 10) + Time[5];
+		printLine(s,2);	
+	}
 }
 
 void addMinute()
 {
+	int m;
+	m = (Time[2] * 10) + Time[3];
+	
 	if(Time[3] != 9)
 		Time[3]++;
 	else if(Time[3] == 9 && Time[2] != 5)
@@ -1208,10 +1251,18 @@ void addMinute()
 		Time[3] = 0;
 		addHour();
 	}
+	if(!IsDigitalMode && !MenuFlag)
+	{
+		printLine(m,1);
+		m = (Time[2] * 10) + Time[3];
+		printLine(m,1);
+	}
 }
 
 void addHour()
 {
+	int h;
+	h = (Time[0] * 10) + Time[1];
 	if(Is12Hours)		// if we working in 12H mode
 	{
 		if(Time[0] != 1 && Time[1] != 9)
@@ -1246,11 +1297,18 @@ void addHour()
 			Time[1] = 0;
 		}
 		else
-		{
+		{			
 			Time[0] = 0;
-			Time[1] = 0;
+			Time[1] = 0;	
 			addDay();
 		}
+	}
+	if(!IsDigitalMode && !MenuFlag)
+	{	
+		printLine(h,0);
+		
+		h = (Time[0] * 10) + Time[1];
+		printLine(h,0);
 	}
 }
 
@@ -1319,13 +1377,13 @@ void PrintDate()
 {
 	char buffer[10];
 	sprintf(buffer,"%02d/%02d",Date[0],Date[1]);
-	oledPutString(buffer, 7, 15*6);
+	oledPutString(buffer, 7, 0*6);
 }
 
 void PrintAlarm()
 {
 	if(EnableAlarm)
-		oledWriteChar1x(0x41,0 , 1*6);	
+		oledWriteChar1x(0x41,0 , 15*6);	
 }
 
 /* printing the Digital Clock */
@@ -1340,18 +1398,18 @@ void printDigitalClock()
 		{
 			case 0:		//{ 0x3e, 0x51, 0x49, 0x45, 0x3e }
 				// 3 => 0011 => 0000-0000-1111-1111, e => 1110 => 1111-1111-1111-0000
-				oledPutString(0x00,5,3*6);
-				oledPutString(0x00,5,4*6);
-				oledPutString(0x00,5,5*6);
-				oledPutString(0xff,4,3*6);
-				oledPutString(0xff,4,4*6);
-				oledPutString(0xff,4,5*6);
-				oledPutString(0xff,3,3*6);
-				oledPutString(0xff,3,4*6);
-				oledPutString(0xff,3,5*6);
-				oledPutString(0xf0,2,3*6);
-				oledPutString(0xf0,2,4*6);
-				oledPutString(0xf0,2,5*6); 
+				oledWriteChar1x(0x00,5,3*6);
+				oledWriteChar1x(0x00,5,4*6);
+				oledWriteChar1x(0x00,5,5*6);
+				oledWriteChar1x(0xff,4,3*6);
+				oledWriteChar1x(0xff,4,4*6);
+				oledWriteChar1x(0xff,4,5*6);
+				oledWriteChar1x(0xff,3,3*6);
+				oledWriteChar1x(0xff,3,4*6);
+				oledWriteChar1x(0xff,3,5*6);
+				oledWriteChar1x(0xf0,2,3*6);
+				oledWriteChar1x(0xf0,2,4*6);
+				oledWriteChar1x(0xf0,2,5*6); 
 				break;
 			case 1:		//{ 0x00, 0x42, 0x7f, 0x40, 0x00 }
 			
@@ -1378,14 +1436,6 @@ void printDigitalClock()
 }
 
 
-/* printing the Analog Seconds,Minutes and Hours Lines */
-void printAnalogTime()
-{
-	drawLine( 65, 31, 65+(90-65)/2, 31+(31-31)/2, fat ) ;		// printing Hours Line
-	drawLine( 65, 31, 65-(65-65)/5, 10-(10-31)/5, thick ) ;		// printing Minutes Line
-	drawLine( 65, 31, 80-(80-65)/5, 20-(20-31)/5, thin ) ;		// printing Seconds Line
-}
-
 /* printing the Setup Menu */
 void PrintMenu()
 {
@@ -1393,6 +1443,7 @@ void PrintMenu()
 	int Right_button = 0;
 	int Left_button = 0;
 	int lineSelect = 2;
+	MenuFlag = TRUE;
 	while(1)
 	{
 		ADCON0 = 0x13;
@@ -1466,14 +1517,21 @@ void main(void)
 	BOOL status = FALSE;
 	InitializeSystem();
 
-	T0CON = 0B00010100 ;		// init (16 bits, prescaler- 1:32)
-	T0CON = T0CON | 0x80;		
-	RCONbits.IPEN = 1 ;			
-	INTCON2bits.TMR0IP = 1 ;
-	INTCON = 0B11100000 ;
+//	T0CON = 0B00010100 ;		// init (16 bits, prescaler- 1:32)
+//	T0CON = T0CON | 0x80;		
+//	RCONbits.IPEN = 1 ;			
+//	INTCON2bits.TMR0IP = 1 ;
+//	INTCON = 0B11100000 ;
+//
 
+	// Initialize Timer 0
+	T0CON = 0x05;
+	// Initialize Timer Interrupt
+	RCONbits.IPEN = 1 ;			//Prio Enable
+	INTCON2bits.TMR0IP = 1 ;	//Use Hi-Prio
+	INTCON = 0xE0 ;				//Enable Timer Interrupt
 
-
+	T0CON |= 0x80 ;				//Start the Timer
 
     while(1)							//Main is Usualy an Endless Loop
     {		
@@ -1486,25 +1544,26 @@ void main(void)
 		{
 			if(IsDigitalMode)		// Digital Clock Mode
 				printDigitalClock();
-				//PrintSmallClock();
 
 			else
 			{
 				if(!status)
 				{
 					drawClockPoints();	// Analog Clock Mode
+					printLine(Time[4] * 10 + Time[5],2);
+					printLine(Time[2] * 10 + Time[3],1);
+					printLine(Time[0] * 10 + Time[1],0);
 					status = TRUE;
 				}
-				
-				printAnalogTime();
-				// here we need to print the analog clock(hours, minutes)
 			}
-			PrintAlarm();
-			PrintDate();
+			//PrintAlarm();
+			//PrintDate();
 		}
 		
 		else
-			PrintMenu();	
+			PrintMenu();
+
+		MenuFlag = FALSE;	
 
 		if(CheckButtonPressed())
 		{
