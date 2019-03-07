@@ -139,7 +139,8 @@ void printAnalogTime(int,int,int);
 
 BOOL CheckButtonPressed(void);
 
-int Time[6]  = {0,0,0,0,0,0};		//{hours_high,hours_low,minutes_high,minutes_low,seconds_high,seconds_low}
+//int Time[6]  = {0,0,0,0,0,0};		//{hours_high,hours_low,minutes_high,minutes_low,seconds_high,seconds_low}
+int Time[3] = {0,0,0};
 int Date[2]  = {1,1};	// {day,month}
 int radius = 32;
 BOOL IsDigitalMode = TRUE;
@@ -611,13 +612,10 @@ void SetTimeMenu()
 	char buffer[10];
 	int lineSelect = 0;
 	BOOL status = TRUE;
-	int tempTime[6] = {0,0,0,0,0,0};
+	int tempTime[3] = {0,0,0};
 	tempTime[0] = Time[0];
 	tempTime[1] = Time[1];
 	tempTime[2] = Time[2];
-	tempTime[3] = Time[3];
-	tempTime[4] = Time[4];
-	tempTime[5] = Time[5];
 	while(1)
 	{	
 		if(status)
@@ -625,7 +623,7 @@ void SetTimeMenu()
 			FillDisplay(0x00);
 					
 			oledPutROMString("Set Time Menu", 0, 5*5);
-			sprintf(buffer,"%d%d:%d%d:%d%d",tempTime[0],tempTime[1],tempTime[2],tempTime[3],tempTime[4],tempTime[5]);
+			sprintf(buffer,"%02d:%02d:%02d",tempTime[0],tempTime[1],tempTime[2]);
 			oledPutString(buffer, 3, 5*6);
 
 			// if 12H need to print also AM\ PM
@@ -646,9 +644,6 @@ void SetTimeMenu()
 			Time[0] = tempTime[0];
 			Time[1] = tempTime[1];
 			Time[2] = tempTime[2];
-			Time[3] = tempTime[3];
-			Time[4] = tempTime[4];
-			Time[5] = tempTime[5];
 			IsClockSet = TRUE;
 			return;		
 		}		
@@ -704,80 +699,47 @@ void SetTimeMenu()
 					case 0:  // hours
 						if (!Is12Hours)
 						{
-							if(tempTime[0] == 2 && tempTime[1] == 3)
+							if(tempTime[0] == 23)
 							{
 								tempTime[0] = 0;
-								tempTime[1] = 0;
 								IsAM = TRUE;
 							}
-							else if(tempTime[0] != 2 && tempTime[1] == 9)
+							else
 							{
-								tempTime[0]++;
-								tempTime[1] = 0;
-							}
-							else if((tempTime[0] != 2 && tempTime[1] != 9) || (tempTime[0] == 2 && tempTime[1] != 3))
-							{
-								tempTime[1]++;	
-								if(tempTime[0] > 0 && tempTime[1] > 2)
+								tempTime[0]++;	
+								if(tempTime[0] >=12)
 									IsAM = FALSE;
-							}
-
-							if(tempTime[0] == 0 && tempTime[0] == 0)
-								IsAM = TRUE;		
+								else
+									IsAM = TRUE;
+							}	
 						}
 						else
 						{
-							if(tempTime[0] == 1 && tempTime[1] == 2)
-							{
-								tempTime[0] = 0;
-								tempTime[1] = 1;
+							if(tempTime[0] == 12)
+							{	
+								tempTime[0] = 1;
 								if(IsAM)
-									IsAM = FALSE;	
+									IsAM = FALSE;
 								else
 									IsAM = TRUE;
 							}
-							else if(tempTime[0] == 1 && tempTime[1] < 2)
-							{
-								tempTime[1]++;
-							}
-							else if(tempTime[0] != 1 && tempTime[1] == 9)
-							{
-								tempTime[0]++;
-								tempTime[1] = 0;						
-							}
 							else
-								tempTime[1]++;							
+								tempTime[0]++;							
 						}
 						status = TRUE;
 						break;
 					case 1:
-						if(tempTime[3] < 9)
-							tempTime[3]++;
-						else if(tempTime[2] == 5 && tempTime[3] == 9)
-						{
-							tempTime[2] = 0;
-							tempTime[3] = 0;
-						}
-						else if(tempTime[2] != 5 && tempTime[3] == 9)
-						{
-							tempTime[2]++;
-							tempTime[3] = 0;
-						}
+						if(tempTime[1] == 59)
+							tempTime[1] = 0;
+						else
+							tempTime[1]++;
 						status = TRUE;
 						break;
 					case 2:
-						if(tempTime[5] < 9)
-							tempTime[5]++;
-						else if(tempTime[4] == 5 && tempTime[5] == 9)
-						{
-							tempTime[4] = 0;
-							tempTime[5] = 0;
-						}
-						else if(tempTime[4] != 5 && tempTime[5] == 9)
-						{
-							tempTime[4]++;
-							tempTime[5] = 0;
-						}
+						if(tempTime[2] == 59)
+							tempTime[2] = 0;
+						else
+							tempTime[2]++;
 						status = TRUE;
 						break;
 				}
@@ -789,85 +751,50 @@ void SetTimeMenu()
 					case 0:  // hours
 						if (!Is12Hours)
 						{
-							if(tempTime[1] > 0)
-								tempTime[1]--;
-							else if(tempTime[0] != 0 && tempTime[1] == 0)
+							if(tempTime[0] > 13)
+								tempTime[0]--;
+							else if(tempTime[0] == 13)
 							{
 								tempTime[0]--;
-								tempTime[1] = 9;
+								IsAM = TRUE;
 							}
-							
-							else
+							else if(tempTime[0] <= 12 && tempTime[0] > 1)
+								tempTime[0]--;
+							else if(tempTime[0] == 1)
 							{
-								tempTime[0] = 2;
-								tempTime[1] = 3;
+								tempTime[0]--;
+								IsAM = FALSE;
 							}
-							if(tempTime[0] == 0 && tempTime[0] == 0)
-								IsAM = TRUE;						
+							else if(tempTime[0] == 0)
+								tempTime[0] = 23;				
 						}
 						else
 						{
-							if(tempTime[0] != 1 && tempTime[1] != 0)
-							{
-								tempTime[1]--;						
-							}
-							else if(tempTime[0] == 1 && tempTime[1] == 0)
-							{	
-								tempTime[0] = 0;
-								tempTime[1] = 9;
-							}	
-							else if(tempTime[0] == 0 && tempTime[1] == 1)
-							{
-								tempTime[0] = 1;
-								tempTime[1] = 2;
-								if(IsAM)
-									IsAM = FALSE;	
-								else
-									IsAM = TRUE;
-							}
+							if(tempTime[0] <= 12 && tempTime[0] > 1)
+								tempTime[0]--;
 							else
 							{
-								tempTime[1]--;
-							}																			
+								tempTime[0] = 12;
+								if(IsAM)
+									IsAM = FALSE;
+								else
+									IsAM = TRUE;	
+							}																		
 						}
 						status = TRUE;
 						break;
 					case 1:		// Minutes
-						if(tempTime[3] > 0)
-							tempTime[3]--;
-						else if(tempTime[2] != 0 && tempTime[3] == 0)
-						{
-							tempTime[2]--;
-							tempTime[3] = 9;
-						}
-//						else if(tempTime[2] == 0 && tempTime[3] != 0)
-//						{
-//							tempTime[3]--;
-//						}
+						if(tempTime[1] > 0)
+							tempTime[1]--;
 						else
-						{	
-							tempTime[2] = 5;
-							tempTime[3] = 9;
-						}
+							tempTime[1] = 59;
 						status = TRUE;
 						break;
 					case 2:		// Seconds
-						if(tempTime[5] > 0)
-							tempTime[5]--;
-						else if(tempTime[4] != 0 && tempTime[5] == 0)
-						{
-							tempTime[4]--;
-							tempTime[5] = 9;
-						}
-//						else if(tempTime[4] == 0 && tempTime[5] != 0)
-//						{
-//							tempTime[5]--;
-//						}
+						if(tempTime[2] > 0)
+							tempTime[2]--;
 						else
-						{	
-							tempTime[4] = 5;
-							tempTime[5] = 9;
-						}
+							tempTime[2] = 59;
 						status = TRUE;
 						break;
 				}
@@ -1140,7 +1067,15 @@ void PrintSmallClock()
 {
 	char buffer[10];
 	INTCONbits.T0IE = 0 ;			//Timer0 Overflow Interrupt Disable
-	sprintf(buffer,"%d%d:%d%d:%d%d",Time[0],Time[1],Time[2],Time[3],Time[4],Time[5]);
+
+	if(Is12Hours)
+	{	
+		if(Time[0] > 12)
+			Time[0] -= 12;
+		else if(Time[0] == 0)
+			Time[0] = 12;
+	}
+	sprintf(buffer,"%02d:%02d:%02d",Time[0],Time[1],Time[2]);
 	oledPutString(buffer, 0, 10*6);
 	if(Is12Hours)
 	{
@@ -1162,13 +1097,13 @@ void PrintSmallClock()
 void drawClockPoints()
 {
 	int i;
-	BYTE _x0,_y0;
+	int _x0,_y0;
 	//BYTE x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
 	//BYTE y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
 	for (i =0 ; i <60; i++)
 	{
-		_x0 = x0+radius*(cos(i*6));
-		_y0 = y0+radius*(sin(i*6));
+		_x0 = x0+radius*(sin(i*6));
+		_y0 = y0+radius*(cos(i*6));
 		//drawLine(x,y,x+0.2*(30*(int)cos(i*6)),y+0.2*(30*(int)sin(i*6)),thin);
 		drawLine(_x0,_y0,_x0,_y0,thin);
 	}	
@@ -1205,20 +1140,12 @@ void printLine(int val, int type)
 /* method invoke from interrupt for adding second */ 
 void addSecond()
 {
-	int s;
-	s = (Time[4] * 10) + Time[5];
-
-	if(Time[5] != 9)
-		Time[5]++;
-	else if(Time[5] == 9 && Time[4] != 5)
+	int s = Time[2];
+	if(Time[2] < 59)
+		Time[2]++;
+	else
 	{
-		Time[4]++;
-		Time[5] = 0;
-	}
-	else if(Time[4] == 5 && Time[5] == 9)
-	{
-		Time[4] = 0;
-		Time[5] = 0;
+		Time[2] = 0;
 		addMinute();
 	}
 	
@@ -1226,89 +1153,69 @@ void addSecond()
 		UpdateStatus = TRUE;
 	else if(!MenuFlag)
 	{
-		printLine(s,2);
+		printLine(s,2);		//delete previous second line
 
-		s = (Time[4] * 10) + Time[5];
-		printLine(s,2);	
+		printLine(Time[2],2);	// printing the new second line
 	}
 }
 
 void addMinute()
 {
 	int m;
-	m = (Time[2] * 10) + Time[3];
+	m = Time[1];
 	
-	if(Time[3] != 9)
-		Time[3]++;
-	else if(Time[3] == 9 && Time[2] != 5)
+	if(Time[1] < 59)
+		Time[1]++;
+	else
 	{
-		Time[2]++;
-		Time[3] = 0;
-	}
-	else if(Time[2] == 5 && Time[3] == 9)
-	{
-		Time[2] = 0;
-		Time[3] = 0;
+		Time[1] = 0;
 		addHour();
 	}
 	if(!IsDigitalMode && !MenuFlag)
 	{
-		printLine(m,1);
-		m = (Time[2] * 10) + Time[3];
-		printLine(m,1);
+		printLine(m,1);		//delete previous minute line	
+
+		printLine(Time[1],1);	// printing the new minute line
 	}
 }
 
 void addHour()
 {
 	int h;
-	h = (Time[0] * 10) + Time[1];
+	h = Time[0];
 	if(Is12Hours)		// if we working in 12H mode
 	{
-		if(Time[0] != 1 && Time[1] != 9)
-			Time[1]++;
-		else if(Time[0] != 1 && Time[1] == 9)
+		if(Time[0] == 12)
 		{
-			Time[0]++;
-			Time[1] = 0;
-		}
-		else if(Time[0] == 1 && Time[1] != 2)
-			Time[1]++;
-		else
-		{
-			Time[0] = 0;
-			Time[1] = 1;
+			Time[0] = 1;
 			if(IsAM)
-				IsAM = FALSE;	
+				IsAM = FALSE;
 			else
-			{
 				IsAM = TRUE;
-				addDay();
-			}	
+			addDay();
 		}
+		else
+			Time[0]++;
 	}
 	else
 	{
-		if((Time[0] != 2 && Time[1] != 9) || (Time[0] == 2 && Time[1] != 3))
-			Time[1]++;
-		else if(Time[0] != 2 && Time[1] == 9)
-		{
+		if(Time[0] < 23)
 			Time[0]++;
-			Time[1] = 0;
-		}
 		else
-		{			
+		{
 			Time[0] = 0;
-			Time[1] = 0;	
 			addDay();
 		}
+		if(Time[0] >= 12)
+			IsAM = FALSE;
+		else
+			IsAM = TRUE;
 	}
 	if(!IsDigitalMode && !MenuFlag)
 	{	
 		printLine(h,0);
 		
-		h = (Time[0] * 10) + Time[1];
-		printLine(h,0);
+		printLine(Time[0],0);
 	}
 }
 
@@ -1333,26 +1240,8 @@ void changeClockFormat()
 	{
 		if(!IsAM)
 		{
-			if(Time[0] == 2 && Time[1] >= 2)
-			{
-				Time[1] -= 2;
-				Time[0] = 1;
-			}
-			else if(Time[0] == 2 && Time[1] == 1)
-			{
-				Time[0] = 0;
-				Time[1] = 9;
-			}
-			else if(Time[0] == 2 && Time[1] == 0)
-			{
-				Time[0] = 0;
-				Time[0] = 8;
-			}
-			else if(Time[0] == 1)
-			{
-				Time[0] = 0;
-				Time[1] -= 2;
-			}
+			if(Time[0] > 12)
+				Time[0] -= 12;
 		}	
 	}
 
@@ -1360,10 +1249,10 @@ void changeClockFormat()
 	{
 		if(!IsAM)
 		{
-			Time[0] = 1;
-			Time[1] += 2;
+			Time[0]+= 12;
+			if(Time[0] == 24)
+				Time[0] = 0;
 		}
-
 	}
 
 
@@ -1377,13 +1266,13 @@ void PrintDate()
 {
 	char buffer[10];
 	sprintf(buffer,"%02d/%02d",Date[0],Date[1]);
-	oledPutString(buffer, 7, 0*6);
+	oledPutString(buffer, 7, 15*6);
 }
 
 void PrintAlarm()
 {
 	if(EnableAlarm)
-		oledWriteChar1x(0x41,0 , 15*6);	
+		oledWriteChar1x(0x41,0xB0 , 1*6);	
 }
 
 /* printing the Digital Clock */
@@ -1391,21 +1280,23 @@ void printDigitalClock()
 {
 	int i,j;
 	BYTE temp;
-	for(i = 0; i < 6 ; ++i)
+	for(i = 0; i < 3 ; ++i)
 	{
 		temp = Time[i];
 		switch (Time[i])
 		{
 			case 0:		//{ 0x3e, 0x51, 0x49, 0x45, 0x3e }
 				// 3 => 0011 => 0000-0000-1111-1111, e => 1110 => 1111-1111-1111-0000
-				oledWriteChar1x(0x00,5,3*6);
-				oledWriteChar1x(0x00,5,4*6);
-				oledWriteChar1x(0x00,5,5*6);
-				oledWriteChar1x(0xff,4,3*6);
-				oledWriteChar1x(0xff,4,4*6);
-				oledWriteChar1x(0xff,4,5*6);
-				oledWriteChar1x(0xff,3,3*6);
-				oledWriteChar1x(0xff,3,4*6);
+				
+				oledWriteCharRaw(0x00);
+				oledWriteChar1x(0x00,0xB5,3*6);
+				oledWriteChar1x(0x00,0xB5,4*6);
+				oledWriteChar1x(0x00,0xB5,5*6);
+				oledWriteChar1x(0xff,0xB4,3*6);
+				oledWriteChar1x(0xff,0xB4,4*6);
+				oledWriteChar1x(0xff,0xB4,5*6);
+				oledWriteChar1x(0xff,0xB3,3*6);
+				oledWriteChar1x(0xff,0xB3,4*6);
 				oledWriteChar1x(0xff,3,5*6);
 				oledWriteChar1x(0xf0,2,3*6);
 				oledWriteChar1x(0xf0,2,4*6);
@@ -1444,15 +1335,16 @@ void PrintMenu()
 	int Left_button = 0;
 	int lineSelect = 2;
 	MenuFlag = TRUE;
+	FillDisplay(0x00);
 	while(1)
 	{
 		ADCON0 = 0x13;
 		temp = lineSelect;
 
 		/********* Dual Thread *******/
-		INTCONbits.T0IE = 0 ;			//Disable Timer Interrupts
+		//INTCONbits.T0IE = 0 ;			//Disable Timer Interrupts
 		PrintSmallClock();
-		INTCONbits.T0IE = 1 ;			//Enable Timer Interrupts
+		//INTCONbits.T0IE = 1 ;			//Enable Timer Interrupts
 		/*****************************/
 		
 		oledPutROMString("Display Mode", 2, 0);
@@ -1492,6 +1384,16 @@ void PrintMenu()
 		}		
 	}
 }	
+
+void PrintProtectedAlarmAndDate()
+{
+	INTCONbits.T0IE = 0 ;			//Disable Timer Interrupts
+	PrintAlarm();
+	PrintDate();
+	INTCONbits.T0IE = 1 ;			//Enable Timer Interrupts
+}
+
+
 /********************************************************************/
 
 
@@ -1550,14 +1452,13 @@ void main(void)
 				if(!status)
 				{
 					drawClockPoints();	// Analog Clock Mode
-					printLine(Time[4] * 10 + Time[5],2);
-					printLine(Time[2] * 10 + Time[3],1);
-					printLine(Time[0] * 10 + Time[1],0);
+					printLine(Time[2],2);
+					printLine(Time[1],1);
+					printLine(Time[0],0);
+					PrintProtectedAlarmAndDate();
 					status = TRUE;
 				}
 			}
-			//PrintAlarm();
-			//PrintDate();
 		}
 		
 		else
