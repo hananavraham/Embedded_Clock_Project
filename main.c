@@ -1278,54 +1278,49 @@ void PrintAlarm()
 /* printing the Digital Clock */
 void printDigitalClock()
 {
-	int i,j;
-	BYTE temp;
+	int i,temp;
+	int j = 2;
+	char col[3] = {5,50,90};
 	for(i = 0; i < 3 ; ++i)
 	{
-		temp = Time[i];
 		switch (Time[i])
 		{
-			case 0:		//{ 0x3e, 0x51, 0x49, 0x45, 0x3e }
-				// 3 => 0011 => 0000-0000-1111-1111, e => 1110 => 1111-1111-1111-0000
-				
-				oledWriteCharRaw(0x00);
-				oledWriteChar1x(0x00,0xB5,3*6);
-				oledWriteChar1x(0x00,0xB5,4*6);
-				oledWriteChar1x(0x00,0xB5,5*6);
-				oledWriteChar1x(0xff,0xB4,3*6);
-				oledWriteChar1x(0xff,0xB4,4*6);
-				oledWriteChar1x(0xff,0xB4,5*6);
-				oledWriteChar1x(0xff,0xB3,3*6);
-				oledWriteChar1x(0xff,0xB3,4*6);
-				oledWriteChar1x(0xff,3,5*6);
-				oledWriteChar1x(0xf0,2,3*6);
-				oledWriteChar1x(0xf0,2,4*6);
-				oledWriteChar1x(0xf0,2,5*6); 
+			case 0:
+				PrintDigit(0x20,col[i]);
 				break;
-			case 1:		//{ 0x00, 0x42, 0x7f, 0x40, 0x00 }
-			
-			case 2:		//{ 0x42, 0x61, 0x51, 0x49, 0x46 }
-		
-			case 3:		//{ 0x21, 0x41, 0x45, 0x4b, 0x31 }
-
-			case 4:		//{ 0x18, 0x14, 0x12, 0x7f, 0x10 }
-	
-			case 5:		//{ 0x27, 0x45, 0x45, 0x45, 0x39 }
-
-			case 6:		//{ 0x3c, 0x4a, 0x49, 0x49, 0x30 }
-
-			case 7:		//{ 0x01, 0x71, 0x09, 0x05, 0x03 }
-
-			case 8:		//{ 0x36, 0x49, 0x49, 0x49, 0x36 }
-
-			case 9:		//{ 0x06, 0x49, 0x49, 0x29, 0x1e }
-		
+			case 1:	
+				PrintDigit(0x24,col[i]);
+				break;
+			case 2:	
+				PrintDigit(0x28,col[i]);
+				break;
+			case 3:
+				PrintDigit(0x2C,col[i]);
+				break;
+			case 4:	
+				PrintDigit(0x30,col[i]);
+				break;
+			case 5:	
+				PrintDigit(0x34,col[i]);
+				break;
+			case 6:	
+				PrintDigit(0x38,col[i]);
+				break;
+			case 7:	
+				PrintDigit(0x3C,col[i]);
+				break;
+			case 8:
+				PrintDigit(0x40,col[i]);
+				break;
+			case 9:	
+				PrintDigit(0x44,col[i]);
+				break;
 			default:
+				temp = Time[0] / 10;
 				break;
 		}
 	}
 }
-
 
 /* printing the Setup Menu */
 void PrintMenu()

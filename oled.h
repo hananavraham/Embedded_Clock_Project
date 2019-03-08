@@ -54,9 +54,11 @@ void oledRepeatByte( BYTE b, int repeat, unsigned char page, unsigned char col);
 void oledPrintRectangle(unsigned char start_page, unsigned char start_col);
 void FillInverseDisplay(unsigned char data, unsigned char page,int pageOffset, unsigned char col, int colOffset);
 
+void printDigit(char letter,unsigned char col);
 
 /*********************************************/
 extern ROM BYTE g_pucFont[95][5];
+extern ROM BYTE g_pucNum[50][5];
 /*********************************************/
 
 // Define this to implement ClearDevice function in the driver.
