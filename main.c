@@ -139,10 +139,9 @@ void printAnalogTime(int,int,int);
 
 BOOL CheckButtonPressed(void);
 
-//int Time[6]  = {0,0,0,0,0,0};		//{hours_high,hours_low,minutes_high,minutes_low,seconds_high,seconds_low}
 int Time[3] = {0,0,0};
+int AlarmTime[2] = {0,0};
 int Date[2]  = {1,1};	// {day,month}
-int radius = 32;
 BOOL IsDigitalMode = TRUE;
 BOOL EnableAlarm = FALSE;
 BOOL Is12Hours = FALSE;
@@ -154,6 +153,9 @@ BOOL MenuFlag = FALSE;
 //int y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
 int x0 = 65;
 int y0 = 31;
+int radius = 32;
+static BOOL Alarm = FALSE;
+static int delay = 20;	// delay time for alarm
 
 //	========================	VECTOR REMAPPING	========================
 #if defined(__18CXX)
@@ -239,7 +241,14 @@ int y0 = 31;
     //Service the interrupt
     //Clear the interrupt flag
     //Etc.
-
+	
+	static char disp=0 ;
+	if(Alarm)
+	{
+		WriteCommand(disp ? 0xA6 : 0xA7) ;	//Change Display
+		disp = !disp ;
+		delay--;
+	}
 	//if (INTCONbits.T0IF)
 	//{
 		addSecond();
@@ -946,8 +955,10 @@ void SetDateMenu()
 
 void AlarmMenu()
 {
-	int Right_button, Left_button , button1;
+	int Right_button, Left_button , button1,button2;
+	char buffer[10];
 	int lineSelect = 1;
+	int timeSelect = 0;
 	BOOL status = TRUE;
 
 	while(1)
@@ -957,14 +968,27 @@ void AlarmMenu()
 			FillDisplay(0x00);
 			oledPutROMString("Alarm Menu", 0, 5*6);
 		
-			oledPutROMString("ON", 3, 3* 6);
+			sprintf(buffer,"%02d:%02d",AlarmTime[0],AlarmTime[1]);
+			oledPutString(buffer, 3, 5*6);
+
 			oledPutROMString("OFF", 5, 3* 6);
+
+			// if 12H need to print also AM\ PM
+			if(Is12Hours)
+			{
+				if(IsAM)
+					oledPutROMString("AM", 3, 14*6);
+				else
+					oledPutROMString("PM", 3, 14*6);
+			}
+
+			
 			
 			status = FALSE;
 		}
 	
 		if(lineSelect == 1)
-			FillInverseDisplay(0xFF, 3,0,0,4);
+			printCurrentField(timeSelect);
 		else
 			FillInverseDisplay(0xFF, 5,0,0,4);	
 
@@ -972,59 +996,208 @@ void AlarmMenu()
 		if(CheckButtonPressed())
 		{
 			if(lineSelect == 1)
+			{
 				EnableAlarm = TRUE;
+				
+			}
 			else
+			{
 				EnableAlarm = FALSE;
+				Alarm == FALSE;
+			}
 			return;		
 		}
 
-		/* check if Up Button pressed to back the Main Menu */
-		button1 = mTouchReadButton(1);
-		if (button1 < 900)
-		{
-			/* wait for the slider to be released */
-			while (button1 < 900)
-			{
-				button1 = mTouchReadButton(1);
-			}
-
-			return;
-		}
-
-		mTouchCalibrate();
-		/* Read the R button - RA0 */
-		Right_button = mTouchReadButton(0);
-		/* Read the L button - RA3 */
-		Left_button = mTouchReadButton(3);
+		/* for Alarm time select */
 	
-		/* Check if the R button was pressed */
-		if (Right_button < 900)
+		if(lineSelect == 1)
 		{
-			/* wait for the button to be released */
-			while (Right_button < 900)
+			mTouchCalibrate();
+			/* Read the R button - RA0 */
+			Right_button = mTouchReadButton(0);
+			/* Read the L button - RA3 */
+			Left_button = mTouchReadButton(3);
+		
+			/* Check if the R button was pressed */
+			if (Right_button < 900)
 			{
-				Right_button = mTouchReadButton(0);
+				/* wait for the button to be released */
+				while (Right_button < 900)
+				{
+					Right_button = mTouchReadButton(0);
+				}
+	
+				if(timeSelect < 2)
+				{
+					timeSelect++;	
+					status = TRUE;
+					if(timeSelect == 2)
+						lineSelect = 2;
+				}	
 			}
-
-			if(lineSelect < 2)
+		
+			if (Left_button < 900)
 			{
-				lineSelect++;	
-				status = TRUE;
-			}	
+				/* wait for the button to be released */
+				while (Left_button < 900)
+				{
+					Left_button = mTouchReadButton(3);
+				}
+				if(timeSelect > 0)
+				{
+					timeSelect--;
+					status = TRUE;
+				}	
+			}
+	
+			//mTouchCalibrate();
+			/* Scroll bar - RA1/RA2*/
+			button1 = mTouchReadButton(1);
+			button2 = mTouchReadButton(2);
+	
+			if ((button1 < 800) || (button2 < 800))
+			{
+				if (button1 < button2)		// Up Button Pressed
+				{
+					switch(timeSelect)
+					{
+						case 0:  // hours
+							if (!Is12Hours)
+							{
+								if(AlarmTime[0] == 23)
+								{
+									AlarmTime[0] = 0;
+									IsAM = TRUE;
+								}
+								else
+								{
+									AlarmTime[0]++;	
+									if(AlarmTime[0] >=12)
+										IsAM = FALSE;
+									else
+										IsAM = TRUE;
+								}	
+							}
+							else
+							{
+								if(AlarmTime[0] == 12)
+								{	
+									AlarmTime[0] = 1;
+									if(IsAM)
+										IsAM = FALSE;
+									else
+										IsAM = TRUE;
+								}
+								else
+									AlarmTime[0]++;							
+							}
+							status = TRUE;
+							break;
+						case 1:
+							if(AlarmTime[1] == 59)
+								AlarmTime[1] = 0;
+							else
+								AlarmTime[1]++;
+							status = TRUE;
+							break;
+					}
+				}		
+				else		// Down Button Pressed
+				{
+					switch(timeSelect)
+					{
+						case 0:  // hours
+							if (!Is12Hours)
+							{
+								if(AlarmTime[0] > 13)
+									AlarmTime[0]--;
+								else if(AlarmTime[0] == 13)
+								{
+									AlarmTime[0]--;
+									IsAM = TRUE;
+								}
+								else if(AlarmTime[0] <= 12 && AlarmTime[0] > 1)
+									AlarmTime[0]--;
+								else if(AlarmTime[0] == 1)
+								{
+									AlarmTime[0]--;
+									IsAM = FALSE;
+								}
+								else if(AlarmTime[0] == 0)
+									AlarmTime[0] = 23;				
+							}
+							else
+							{
+								if(AlarmTime[0] <= 12 && AlarmTime[0] > 1)
+									AlarmTime[0]--;
+								else
+								{
+									AlarmTime[0] = 12;
+									if(IsAM)
+										IsAM = FALSE;
+									else
+										IsAM = TRUE;	
+								}																		
+							}
+							status = TRUE;
+							break;
+						case 1:		// Minutes
+							if(AlarmTime[1] > 0)
+								AlarmTime[1]--;
+							else
+								AlarmTime[1] = 59;
+							status = TRUE;
+							break;
+					}
+					
+				}
+				/* wait for the slider to be released */
+				while ((button1 < 800))
+				{
+					button1 = mTouchReadButton(1);
+					button2 = mTouchReadButton(2);
+				}
+			}
 		}
 	
-		if (Left_button < 900)
+
+		else
 		{
-			/* wait for the button to be released */
-			while (Left_button < 900)
+		
+			/* Read the R button - RA0 */
+			Right_button = mTouchReadButton(0);
+			/* Read the L button - RA3 */
+			Left_button = mTouchReadButton(3);
+		
+			/* Check if the R button was pressed */
+			if (Right_button < 900)
 			{
-				Left_button = mTouchReadButton(3);
+				/* wait for the button to be released */
+				while (Right_button < 900)
+				{
+					Right_button = mTouchReadButton(0);
+				}
+	
+				if(lineSelect < 2)
+				{
+					lineSelect++;	
+					status = TRUE;
+				}	
 			}
-			if(lineSelect > 1)
+		
+			if (Left_button < 900)
 			{
-				lineSelect--;
-				status = TRUE;
-			}	
+				/* wait for the button to be released */
+				while (Left_button < 900)
+				{
+					Left_button = mTouchReadButton(3);
+				}
+				if(lineSelect > 1)
+				{
+					lineSelect--;
+					status = TRUE;
+				}	
+			}
 		}
 	}
 }
@@ -1259,6 +1432,20 @@ void changeClockFormat()
 }
 /*******************************************************************/
 
+void checkAlarm()
+{
+	if(EnableAlarm)		// if we set the Alarm
+		if(Time[0] == AlarmTime[0] && Time[1] == AlarmTime[1])
+		{
+			Alarm = TRUE;	
+		}
+	if(delay == 0)
+	{
+		Alarm = FALSE;
+		EnableAlarm = FALSE;
+		delay = 20;
+	}	
+}
 
 /************** Printing Methods ****************************/
 /* printing the current Date */
@@ -1278,47 +1465,57 @@ void PrintAlarm()
 /* printing the Digital Clock */
 void printDigitalClock()
 {
-	int i,temp;
+	int i,x;
+	int tempTime[2] = {0,0};
 	int j = 2;
-	char col[3] = {5,50,90};
+	unsigned char col[3][2] = {{0,20},{48,66},{90,110}};
 	for(i = 0; i < 3 ; ++i)
 	{
-		switch (Time[i])
-		{
-			case 0:
-				PrintDigit(0x20,col[i]);
-				break;
-			case 1:	
-				PrintDigit(0x24,col[i]);
-				break;
-			case 2:	
-				PrintDigit(0x28,col[i]);
-				break;
-			case 3:
-				PrintDigit(0x2C,col[i]);
-				break;
-			case 4:	
-				PrintDigit(0x30,col[i]);
-				break;
-			case 5:	
-				PrintDigit(0x34,col[i]);
-				break;
-			case 6:	
-				PrintDigit(0x38,col[i]);
-				break;
-			case 7:	
-				PrintDigit(0x3C,col[i]);
-				break;
-			case 8:
-				PrintDigit(0x40,col[i]);
-				break;
-			case 9:	
-				PrintDigit(0x44,col[i]);
-				break;
-			default:
-				temp = Time[0] / 10;
-				break;
+		tempTime[0] = Time[i] / 10;   // getting the msb digit
+		tempTime[1] = Time[i] % 10;	  // getting the lsb digit	
+		for(x = 0; x < 2; ++x)
+		{	
+			switch (tempTime[x])
+			{			
+				case 0:
+					PrintDigit(0x20,col[i][x]);
+					break;
+				case 1:	
+					PrintDigit(0x24,col[i][x]);
+					break;
+				case 2:	
+					PrintDigit(0x28,col[i][x]);
+					break;
+				case 3:
+					PrintDigit(0x2C,col[i][x]);
+					break;
+				case 4:	
+					PrintDigit(0x30,col[i][x]);
+					break;
+				case 5:	
+					PrintDigit(0x34,col[i][x]);
+					break;
+				case 6:	
+					PrintDigit(0x38,col[i][x]);
+					break;
+				case 7:	
+					PrintDigit(0x3C,col[i][x]);
+					break;
+				case 8:
+					PrintDigit(0x40,col[i][x]);
+					break;
+				case 9:	
+					PrintDigit(0x44,col[i][x]);
+					break;
+				default:
+					break;
+			}
 		}
+		// print ":" 
+		oledWriteChar1x(0x6F,0xB3 , 40);
+		oledWriteChar1x(0x6F,0xB4 , 40);
+		oledWriteChar1x(0x6F,0xB3 , 84);
+		oledWriteChar1x(0x6F,0xB4 , 84);
 	}
 }
 
@@ -1378,6 +1575,17 @@ void PrintMenu()
 			return;
 		}		
 	}
+}
+
+void PrintAMorPM()
+{
+	if(Is12Hours)
+	{
+		if(IsAM)
+			oledPutROMString("AM", 7, 0);
+		else
+			oledPutROMString("PM", 8, 0);	
+	}
 }	
 
 void PrintProtectedAlarmAndDate()
@@ -1385,6 +1593,7 @@ void PrintProtectedAlarmAndDate()
 	INTCONbits.T0IE = 0 ;			//Disable Timer Interrupts
 	PrintAlarm();
 	PrintDate();
+	PrintAMorPM();
 	INTCONbits.T0IE = 1 ;			//Enable Timer Interrupts
 }
 
@@ -1439,8 +1648,12 @@ void main(void)
 			
 		if(IsClockSet)
 		{
+			checkAlarm();
 			if(IsDigitalMode)		// Digital Clock Mode
+			{
 				printDigitalClock();
+				PrintProtectedAlarmAndDate();
+			}
 
 			else
 			{
