@@ -905,12 +905,43 @@ void SetDateMenu()
 				switch(lineSelect)
 				{
 					case 0:  // Days
-						if(tempDate[lineSelect] < 31)
-							tempDate[lineSelect]++;
-						else
-						{	
-							tempDate[lineSelect] = 1;
-						}							
+						switch(tempDate[1])
+						{
+							case 1:	
+							case 3:
+							case 5:
+							case 7:
+							case 8:
+							case 10:
+							case 12:
+								if(tempDate[lineSelect] < 31)
+									tempDate[lineSelect]++;
+								else
+								{	
+									tempDate[lineSelect] = 1;
+								}
+								break;
+							case 4:
+							case 6:
+							case 9:
+							case 11:
+								if(tempDate[lineSelect] < 30)
+									tempDate[lineSelect]++;
+								else
+								{	
+									tempDate[lineSelect] = 1;
+								}	
+								break;
+							case 2:
+								if(tempDate[lineSelect] < 28)
+									tempDate[lineSelect]++;
+								else
+								{	
+									tempDate[lineSelect] = 1;
+								}
+								break;
+						}
+													
 						
 						status = TRUE;
 						break;
@@ -932,7 +963,28 @@ void SetDateMenu()
 							tempDate[lineSelect]--;
 						else
 						{	
-							tempDate[lineSelect] = 31;
+							switch(tempDate[1])
+							{
+								case 1:	
+								case 3:
+								case 5:
+								case 7:
+								case 8:
+								case 10:
+								case 12:	
+									tempDate[lineSelect] = 31;
+									break;
+								case 4:
+								case 6:
+								case 9:
+								case 11:
+									tempDate[lineSelect] = 30;
+									break;
+								case 2:
+									tempDate[lineSelect] = 28;
+									break;
+							}
+							
 						}							
 						status = TRUE;
 						break;
@@ -1398,15 +1450,47 @@ void addHour()
 
 void addDay()
 {
-	if(Date[0] != 31)
-		Date[0]++;
-	else
+	switch(Date[1])
 	{
-		Date[0] = 1;
-		if(Date[1] != 12)		// end of year
-			Date[1]++;
-		else
-			Date[1] = 1;
+		case 1:
+		case 3:
+		case 5:
+		case 7:
+		case 8:
+		case 10:
+		case 12:
+			if(Date[0] != 31)
+				Date[0]++;
+			else
+			{
+				Date[0] = 1;
+				if(Date[1] != 12)		// end of year
+					Date[1]++;
+				else
+					Date[1] = 1;
+			}
+			break;
+		case 4:
+		case 6:
+		case 9:
+		case 11:
+			if(Date[0] != 30)
+				Date[0]++;
+			else
+			{
+				Date[0] = 1;
+				Date[1]++;
+			}
+			break;
+		case 2:
+			if(Date[0] != 28)
+				Date[0]++;
+			else
+			{
+				Date[0] = 1;
+				Date[1]++;
+			}
+			break;
 	}
 	UpdateStatus = TRUE;	
 }

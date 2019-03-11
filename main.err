@@ -14,60 +14,60 @@ Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clo
 Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 844 : suspicious pointer conversion
 Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 845 : type qualifier mismatch in assignment
 Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 846 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 973 : suspicious pointer conversion
-Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 975 : type qualifier mismatch in assignment
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 976 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 978 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 984 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 986 : suspicious pointer conversion
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1216 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1220 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1224 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1228 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1232 : call of function without prototype
-Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1255 : type qualifier mismatch in assignment
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1256 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1261 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1265 : suspicious pointer conversion
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1326 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1349 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1372 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1384 : call of function without prototype
-Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1459 : type qualifier mismatch in assignment
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1460 : suspicious pointer conversion
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1485 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1488 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1491 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1494 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1497 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1500 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1503 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1506 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1509 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1512 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1542 : call of function without prototype
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1546 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1547 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1548 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1549 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1550 : suspicious pointer conversion
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1551 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1553 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1554 : call of function without prototype
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1589 : suspicious pointer conversion
-Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1591 : suspicious pointer conversion
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1598 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1599 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1600 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1649 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1652 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1653 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1660 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1664 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1671 : call of function without prototype
-Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1677 : call of function without prototype
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1685 : static function 'YourLowPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1685 : static function 'YourHighPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1685 : static function 'YourLowPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1685 : static function 'YourHighPriorityISRCode' never referenced
-Warning[2064] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1685 : static function 'ProcessIO' not defined
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1025 : suspicious pointer conversion
+Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1027 : type qualifier mismatch in assignment
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1028 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1030 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1036 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1038 : suspicious pointer conversion
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1268 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1272 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1276 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1280 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1284 : call of function without prototype
+Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1307 : type qualifier mismatch in assignment
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1308 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1313 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1317 : suspicious pointer conversion
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1378 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1401 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1424 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1436 : call of function without prototype
+Warning[2066] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1543 : type qualifier mismatch in assignment
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1544 : suspicious pointer conversion
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1569 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1572 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1575 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1578 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1581 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1584 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1587 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1590 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1593 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1596 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1626 : call of function without prototype
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1630 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1631 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1632 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1633 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1634 : suspicious pointer conversion
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1635 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1637 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1638 : call of function without prototype
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1673 : suspicious pointer conversion
+Warning[2054] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1675 : suspicious pointer conversion
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1682 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1683 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1684 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1733 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1736 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1737 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1744 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1748 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1755 : call of function without prototype
+Warning[2058] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1761 : call of function without prototype
+Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1769 : static function 'YourLowPriorityISRCode' never referenced
+Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1769 : static function 'YourHighPriorityISRCode' never referenced
+Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1769 : static function 'YourLowPriorityISRCode' never referenced
+Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1769 : static function 'YourHighPriorityISRCode' never referenced
+Warning[2064] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main.c 1769 : static function 'ProcessIO' not defined
