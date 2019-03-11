@@ -243,17 +243,21 @@ static int delay = 20;	// delay time for alarm
     //Etc.
 	
 	static char disp=0 ;
-	if(Alarm)
+	if(INTCONbits.TMR0IF)
 	{
-		WriteCommand(disp ? 0xA6 : 0xA7) ;	//Change Display
-		disp = !disp ;
-		delay--;
-	}
-	//if (INTCONbits.T0IF)
-	//{
+		TMR0H = 0x48 ;				//Write 0xCE51 to 16 bit Timer0
+		TMR0L = 0xE3 ;
+		if(Alarm)
+		{
+			WriteCommand(disp ? 0xA6 : 0xA7) ;	//Change Display
+			disp = !disp ;
+			delay--;
+		}
+
 		addSecond();
-	//}
-	INTCONbits.TMR0IF = 0;	
+
+		INTCONbits.TMR0IF = 0;
+	}	
 
   } //This return will be a "retfie fast", since this is in a #pragma interrupt section 
   #pragma interruptlow YourLowPriorityISRCode
@@ -1584,7 +1588,7 @@ void PrintAMorPM()
 		if(IsAM)
 			oledPutROMString("AM", 7, 0);
 		else
-			oledPutROMString("PM", 8, 0);	
+			oledPutROMString("PM", 7, 0);	
 	}
 }	
 
@@ -1623,12 +1627,6 @@ void main(void)
 	BOOL status = FALSE;
 	InitializeSystem();
 
-//	T0CON = 0B00010100 ;		// init (16 bits, prescaler- 1:32)
-//	T0CON = T0CON | 0x80;		
-//	RCONbits.IPEN = 1 ;			
-//	INTCON2bits.TMR0IP = 1 ;
-//	INTCON = 0B11100000 ;
-//
 
 	// Initialize Timer 0
 	T0CON = 0x05;
