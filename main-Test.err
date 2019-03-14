@@ -1,6 +1,0 @@
-Error[1508] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 405 : inconsistent linkage for DelayMs
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 531 : static function 'YourLowPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 531 : static function 'YourHighPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 531 : static function 'YourLowPriorityISRCode' never referenced
-Warning[2065] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 531 : static function 'YourHighPriorityISRCode' never referenced
-Warning[2064] C:\Users\hananavr\Downloads\Mlab\files\Shenkar\Final Project - Clock\main-Test.c 531 : static function 'ProcessIO' not defined
