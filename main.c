@@ -136,9 +136,9 @@ void addHour();
 void addDay();
 void changeClockFormat();
 void printAnalogTime(int,int,int);
-
 BOOL CheckButtonPressed(void);
 
+int _x[60], _y[60];
 int Time[3] = {0,0,0};
 int AlarmTime[2] = {0,0};
 int Date[2]  = {1,1};	// {day,month}
@@ -149,8 +149,7 @@ BOOL IsAM = FALSE;
 BOOL IsClockSet = FALSE;
 BOOL UpdateStatus = FALSE;
 BOOL MenuFlag = FALSE;
-//int x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
-//int y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
+
 int x0 = 65;
 int y0 = 31;
 int radius = 32;
@@ -1325,42 +1324,33 @@ void PrintSmallClock()
 /* method to print all 60 clock points */
 void drawClockPoints()
 {
-	int i;
+	int i,angle;
 	int _x0,_y0;
-	//BYTE x[60] = {95,93,90,84,77,69,61,53,45,40,36,35,35,39,44,51,59,68,76,83,89,93,95,94,91,85,79,71,62,54,47,41,36,35,35,38,43,50,58,66,74,82,88,92,95,94,91,87,80,72,64,55,48,42,37,35,35,37,42,48,56};
-	//BYTE y[60] = {31,22,14,8,3,1,1,3,7,14,21,30,38,46,52,57,60,60,58,54,48,40,32,24,16,9,4,1,1,2,6,12,20,28,37,45,51,57,60,60,59,55,49,42,34,25,17,10,5,2,1,2,6,11,18,27,35,43,50,56,59};
-	for (i =0 ; i <60; i++)
+
+	for(i = 0; i < 60 ; i++)
 	{
-		_x0 = x0+radius*(sin(i*6));
-		_y0 = y0+radius*(cos(i*6));
-		//drawLine(x,y,x+0.2*(30*(int)cos(i*6)),y+0.2*(30*(int)sin(i*6)),thin);
-		drawLine(_x0,_y0,_x0,_y0,thin);
-	}	
+		if(i % 5 == 0)
+			drawLine(_x[i],_y[i],_x[i],_y[i],fat);
+		else
+			drawLine(_x[i],_y[i],_x[i],_y[i],thin);
+	}
 }
 
 /* getting value and type[sec,min,hour] */
 void printLine(int val, int type)
 {
-	int tempX,tempY;
 	switch (type)
 	{
 		case 0:
-			tempX = x0+radius*(sin(val*30));
-			tempY = y0+radius*(cos(val*30));
-			drawLine( x0, y0, x0+(tempX-x0)/2, y0+(tempY-y0)/2, fat ) ;		
+			drawLine(x0, y0, _x[val]-(_x[val] - x0)/2, _y[val]-(_y[val] - y0)/2, fat);		
 			break;
 		case 1:
-			tempX = x0+radius*(sin(val*6));
-			tempY = y0+radius*(cos(val*6));
-			drawLine( x0, y0, tempX-(tempX-x0)/5, tempY-(tempY-y0)/5, thick ) ;
+			drawLine(x0, y0, _x[val]-(_x[val] - x0)/5, _y[val]-(_y[val] - y0)/5, thick);
 			break;
 		case 2:
-			tempX = x0+radius*(sin(val*6));
-			tempY = y0+radius*(cos(val*6));
-			drawLine( x0, y0, tempX-(tempX-x0)/5, tempY-(tempY-y0)/5, thin ) ;
+			drawLine(x0, y0, _x[val]-(_x[val] - x0)/5, _y[val]-(_y[val] - y0)/5, thin);
 			break;
 	}
-
 }
 
 
@@ -1442,9 +1432,15 @@ void addHour()
 	}
 	if(!IsDigitalMode && !MenuFlag)
 	{	
-		printLine(h,0);
+		if(h > 12)
+			printLine(((h - 12) * 5) + 4,0);
+		else
+			printLine((h * 5) + 4,0);
 		
-		printLine(Time[0],0);
+		if(Time[0] > 12)
+			printLine(((Time[0] - 12) * 5) + (Time[1] / 12) ,0);
+		else
+			printLine((Time[0] * 5) + (Time[1] / 12) ,0);
 	}
 }
 
@@ -1688,6 +1684,18 @@ void PrintProtectedAlarmAndDate()
 
 /********************************************************************/
 
+// calculate all 60 points
+void minSecCalc() 
+{
+	int i, j = 45;
+	for (i = 360; i >= 0; i = i - 6) 
+	{
+		_x[j] = x0 - (radius * cos((i * 3.14) / 180));
+	    _y[j--] = y0 - (radius * sin((i * 3.14) / 180));
+	 	j = (j == -1) ? 59:j;
+	}
+ }
+
 
 /********************************************************************
  * Function:        void main(void)
@@ -1706,7 +1714,6 @@ void PrintProtectedAlarmAndDate()
  *******************************************************************/
 void main(void)
 {
-	
 	BYTE x = 2;
 	BOOL status = FALSE;
 	InitializeSystem();
@@ -1720,6 +1727,7 @@ void main(void)
 	INTCON = 0xE0 ;				//Enable Timer Interrupt
 
 	T0CON |= 0x80 ;				//Start the Timer
+
 
     while(1)							//Main is Usualy an Endless Loop
     {		
@@ -1741,10 +1749,14 @@ void main(void)
 			{
 				if(!status)
 				{
+					minSecCalc();
 					drawClockPoints();	// Analog Clock Mode
 					printLine(Time[2],2);
 					printLine(Time[1],1);
-					printLine(Time[0],0);
+					if(Time[0] > 12)
+						printLine(((Time[0] -12) * 5) + (Time[1] / 12),0);
+					else
+						printLine((Time[0] * 5) + (Time[1] / 12),0);
 					PrintProtectedAlarmAndDate();
 					status = TRUE;
 				}
