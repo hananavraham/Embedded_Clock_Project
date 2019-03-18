@@ -1330,7 +1330,26 @@ void drawClockPoints()
 	for(i = 0; i < 60 ; i++)
 	{
 		if(i % 5 == 0)
-			drawLine(_x[i],_y[i],_x[i],_y[i],fat);
+		{	
+			switch(i)
+			{
+				case 4:
+				case 10:
+					drawLine(_x[i] - 2,_y[i],_x[i],_y[i],fat);
+					break;
+				case 0:
+					drawLine(_x[i],_y[i] + 2,_x[i],_y[i],fat);
+					break;
+				case 7:
+					drawLine(_x[i],_y[i] - 2,_x[i],_y[i],fat);
+					break;
+				default:
+					drawLine(_x[i] - 2,_y[i] - 2,_x[i],_y[i],fat);
+					break;
+			}	
+			//drawLine(_x[i],_x[i],_x[i],_y[i],fat);
+
+		}
 		else
 			drawLine(_x[i],_y[i],_x[i],_y[i],thin);
 	}
@@ -1361,7 +1380,7 @@ void addSecond()
 {
 	int s = Time[2];
 	if(Time[2] < 59)
-		Time[2]++;
+		Time[2]++;		
 	else
 	{
 		Time[2] = 0;
@@ -1499,6 +1518,8 @@ void changeClockFormat()
 		{
 			if(Time[0] > 12)
 				Time[0] -= 12;
+			if(AlarmTime[0] > 12)
+				AlarmTime[0] -= 12;
 		}	
 	}
 
@@ -1507,8 +1528,11 @@ void changeClockFormat()
 		if(!IsAM)
 		{
 			Time[0]+= 12;
+			AlarmTime[0] += 12;
 			if(Time[0] == 24)
 				Time[0] = 0;
+			if(AlarmTime[0] == 24)
+				Time[0] = 0;	
 		}
 	}
 
@@ -1727,7 +1751,6 @@ void main(void)
 	INTCON = 0xE0 ;				//Enable Timer Interrupt
 
 	T0CON |= 0x80 ;				//Start the Timer
-
 
     while(1)							//Main is Usualy an Endless Loop
     {		
